@@ -45,6 +45,7 @@ Every menu option is a field here. You can edit the file while the game is close
 |---|---|---|---|
 | `reaverColor` | `VOID`, `BLOOD`, `ABYSS`, `CUSTOM` | `VOID` | Body color (Reaver is never lit up) |
 | `reaverCustomColor` | int RGB | `0x2A0F3D` | Color used when `reaverColor` is `CUSTOM` |
+| `reaverStyle` | `SOLID_GOLD` ("Solid statue"), `GOLD_TINT` ("Color tint") | `SOLID_GOLD` | Solid statue, or the entity's own skin tinted (dark colors are brightened so the skin stays readable) |
 | `sinkDepth` | 0.5–3 blocks | `2.3` | How deep the body is dragged |
 | `sinkStart` | 0.1–0.8 | `0.35` | Fraction of the finisher spent shivering before the sink |
 | `shiver` | 0–2 | `1.0` | Shiver and arm-tremble strength |

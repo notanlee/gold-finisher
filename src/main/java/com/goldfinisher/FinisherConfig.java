@@ -76,6 +76,7 @@ public class FinisherConfig {
 	// reaver
 	public ReaverColor reaverColor = ReaverColor.VOID;
 	public int reaverCustomColor = 0x2A0F3D;
+	public Style reaverStyle = Style.SOLID_GOLD;
 	/** Blocks the body sinks into the ground. */
 	public double sinkDepth = 2.3;
 	/** Fraction of the finisher spent shivering before the sink starts. */

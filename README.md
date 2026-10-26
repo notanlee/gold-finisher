@@ -58,6 +58,7 @@ Press **G** in game (rebindable under Controls → Gold Finisher) or use Mod Men
 | Option | What it does |
 |---|---|
 | Reaver color | Void purple, Blood red, Abyss blue or **Custom** (R/G/B sliders) |
+| Style | **Solid statue** (the whole body in the color) / **Color tint** (keeps the skin, tinted) |
 | Sink depth | 0.5–3 blocks into the ground |
 | Sink start | 10–80%: how long it shivers before it gets dragged down |
 | Shiver | 0–2×: shiver and arm tremble strength |

@@ -115,19 +115,16 @@ public abstract class LivingEntityRendererMixin {
 		GoldFinisher.Finisher f = state.getData(FINISHER);
 		Integer color = state.getData(COLOR);
 		if (f == null || color == null) return;
-		if (f.type() == FinisherConfig.Type.REAVER) {
+		boolean reaver = f.type() == FinisherConfig.Type.REAVER;
+		FinisherConfig.Style style = reaver ? FinisherConfig.INSTANCE.reaverStyle : FinisherConfig.INSTANCE.style;
+		if (style == FinisherConfig.Style.GOLD_TINT) { // own skin, tinted (reaver's dark colors brightened so the skin stays readable)
+			args.set(6, ARGB.multiply((int) args.get(6), reaver ? ARGB.scaleRGB(color, 2.5F) : color));
+		} else if (!reaver && f.texture() != null) { // ore colors: the real block, untinted
+			args.set(3, RenderTypes.entityCutoutNoCull(OreTextures.tiled(f.texture())));
+			args.set(6, -1);
+		} else { // reaver, rainbow, custom: plain statue tinted
 			args.set(3, RenderTypes.entityCutoutNoCull(STATUE_TEXTURE));
 			args.set(6, color);
-		} else if (FinisherConfig.INSTANCE.style == FinisherConfig.Style.SOLID_GOLD) {
-			if (f.texture() != null) { // ore colors: the real block, untinted
-				args.set(3, RenderTypes.entityCutoutNoCull(OreTextures.tiled(f.texture())));
-				args.set(6, -1);
-			} else { // rainbow/custom: plain statue tinted
-				args.set(3, RenderTypes.entityCutoutNoCull(STATUE_TEXTURE));
-				args.set(6, color);
-			}
-		} else {
-			args.set(6, ARGB.multiply((int) args.get(6), color));
 		}
 	}
 }

@@ -71,6 +71,9 @@ public class FinisherScreen extends Screen {
 				w.add(channel("green", 8, () -> c.reaverCustomColor, v -> c.reaverCustomColor = v));
 				w.add(channel("blue", 0, () -> c.reaverCustomColor, v -> c.reaverCustomColor = v));
 			}
+			w.add(CycleButton.<FinisherConfig.Style>builder(v -> label("style." + v.name().toLowerCase()), c.reaverStyle)
+					.withValues(FinisherConfig.Style.values())
+					.create(0, 0, W, H, label("style"), (b, v) -> c.reaverStyle = v));
 			w.add(new Slider(label("sink_depth"), 0.5, 3, c.sinkDepth,
 					v -> c.sinkDepth = Math.round(v * 10) / 10.0, v -> String.format("%.1f", v)));
 			w.add(new Slider(label("sink_start"), 0.1, 0.8, c.sinkStart,
