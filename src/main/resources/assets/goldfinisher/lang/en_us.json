@@ -24,7 +24,6 @@
 	"goldfinisher.option.blue": "Blue",
 	"goldfinisher.option.duration": "Duration",
 	"goldfinisher.option.rise": "Rise height",
-	"goldfinisher.option.rise_angle": "Rise angle",
 	"goldfinisher.option.animation_speed": "Animation speed",
 	"goldfinisher.option.style": "Style",
 	"goldfinisher.option.style.solid_gold": "Solid statue",
@@ -38,5 +37,18 @@
 	"goldfinisher.option.sounds": "Sounds",
 	"goldfinisher.option.totem_sound": "Totem sound",
 	"goldfinisher.option.preview": "Preview on me",
-	"goldfinisher.option.replay_hint": "In ReplayMod/Flashback use \"Any player kill\" or \"All deaths\""
+	"goldfinisher.option.replay_hint": "In ReplayMod/Flashback use \"Any player kill\" or \"All deaths\"",
+	"goldfinisher.option.horizontal_angle": "Horizontal angle",
+	"goldfinisher.option.vertical_angle": "Vertical angle",
+	"goldfinisher.option.totem_particles": "Totem particles",
+	"goldfinisher.option.reaver_color": "Reaver color",
+	"goldfinisher.option.reaver_color.void": "Void purple",
+	"goldfinisher.option.reaver_color.blood": "Blood red",
+	"goldfinisher.option.reaver_color.abyss": "Abyss blue",
+	"goldfinisher.option.reaver_color.custom": "Custom",
+	"goldfinisher.option.sink_depth": "Sink depth",
+	"goldfinisher.option.sink_start": "Sink start",
+	"goldfinisher.option.shiver": "Shiver",
+	"goldfinisher.option.portal_ring": "Portal ring",
+	"goldfinisher.option.souls": "Souls & smoke"
 }

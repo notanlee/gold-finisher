@@ -5,8 +5,9 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
-/** Render-state keys shared by the renderer mixins and EMF compat, plus the built-in finisher limb pose. */
+/** Render-state keys shared by the renderer mixins and EMF compat, plus the built-in finisher limb pose and path math. */
 public final class FinisherPose {
 	/** 0..1 progress, null when not finishing. */
 	public static final RenderStateDataKey<Float> PROGRESS = RenderStateDataKey.create(() -> "goldfinisher:progress");
@@ -14,6 +15,8 @@ public final class FinisherPose {
 	public static final RenderStateDataKey<GoldFinisher.Finisher> FINISHER = RenderStateDataKey.create(() -> "goldfinisher:finisher");
 	/** True when EMF animates this entity's model: our .jem does the pose, so the built-in one stays off (armor included). */
 	public static final RenderStateDataKey<Boolean> EMF_POSED = RenderStateDataKey.create(() -> "goldfinisher:emf_posed");
+	/** Steepest slant allowed, so tan() stays finite. */
+	private static final double MAX_SLANT = 78;
 
 	private FinisherPose() {}
 
@@ -27,7 +30,7 @@ public final class FinisherPose {
 		float w = t < 0.5F ? 4 * t * t * t : 1 - (-2 * t + 2) * (-2 * t + 2) * (-2 * t + 2) / 2; // ease-in-out cubic
 		// hat, sleeves and pants are children of head/arms/legs, so they follow
 		if (f.type() == FinisherConfig.Type.REAVER) { // dragged down: reaching up, trembling
-			float tremble = 0.08F * Mth.sin(p * 40);
+			float tremble = 0.08F * (float) FinisherConfig.INSTANCE.shiver * Mth.sin(p * 40);
 			blend(m.rightArm, w, -3.0F, tremble);
 			blend(m.leftArm, w, -3.0F, -tremble);
 			blend(m.head, w, -0.8F, m.head.zRot);
@@ -45,6 +48,22 @@ public final class FinisherPose {
 	/** 0..1 how far into the pose transition: reaches 1 at 40% of the finisher, sooner/later with animation speed. */
 	public static float blendTime(float progress) {
 		return Math.min(1F, progress * (float) FinisherConfig.INSTANCE.animationSpeed / 0.4F);
+	}
+
+	/** Horizontal unit direction the slant points to: hDeg around from "behind" the body (0 = back, 180 = front). */
+	public static Vec3 slantDirection(float yRotDeg, double hDeg) {
+		double a = Math.toRadians(yRotDeg + hDeg);
+		return new Vec3(Math.sin(a), 0, -Math.cos(a));
+	}
+
+	/**
+	 * World offset after moving {@code vertical} blocks (negative = down) along a path tilted vDeg from vertical
+	 * toward {@link #slantDirection}; negative vDeg tilts the other way.
+	 */
+	public static Vec3 slantOffset(float yRotDeg, double hDeg, double vDeg, double vertical) {
+		double v = Mth.clamp(vDeg, -MAX_SLANT, MAX_SLANT);
+		double side = Math.abs(vertical) * Math.tan(Math.toRadians(v));
+		return slantDirection(yRotDeg, hDeg).scale(side).add(0, vertical, 0);
 	}
 
 	private static void blend(ModelPart part, float w, float xRot, float zRot) {

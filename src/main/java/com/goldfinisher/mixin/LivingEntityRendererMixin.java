@@ -17,6 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -39,7 +40,6 @@ public abstract class LivingEntityRendererMixin {
 	private static final RenderStateDataKey<Integer> COLOR = RenderStateDataKey.create(() -> "goldfinisher:color");
 	// Near-white noise, multiplied by COLOR, so every model UV layout comes out evenly colored.
 	private static final Identifier STATUE_TEXTURE = Identifier.fromNamespaceAndPath(GoldFinisher.MOD_ID, "textures/entity/statue.png");
-	private static final int REAVER_COLOR = 0xFF2A0F3D;
 	private static final int FULL_BRIGHT = 0xF000F0;
 
 	@Inject(method = "extractRenderState", at = @At("TAIL"))
@@ -52,7 +52,7 @@ public abstract class LivingEntityRendererMixin {
 		state.setData(EMF_POSED, f != null && EmfCompat.isAnimating(model));
 		if (f == null) return;
 		boolean reaver = f.type() == FinisherConfig.Type.REAVER;
-		state.setData(COLOR, reaver ? REAVER_COLOR : 0xFF000000 | GoldFinisher.color(f, entity, partialTick));
+		state.setData(COLOR, 0xFF000000 | GoldFinisher.color(f, entity, partialTick)); // reaver color is resolved at start
 		// Draw where it died: the server still knocks the body back, the client ignores it.
 		state.x = f.pos().x;
 		state.y = f.pos().y;
@@ -80,26 +80,31 @@ public abstract class LivingEntityRendererMixin {
 		Float p = state.getData(PROGRESS);
 		GoldFinisher.Finisher f = state.getData(FINISHER);
 		if (p == null || f == null) return;
-		// pose is already scaled, so divide offsets by scale
-		if (f.type() == FinisherConfig.Type.REAVER) {
-			if (p < 0.35F) { // shiver, then get dragged into the ground
-				poseStack.translate(0.02F * Mth.sin(p * 120) / scale, 0, 0);
+		FinisherConfig c = FinisherConfig.INSTANCE;
+		double vertical, hAngle, vAngle;
+		if (f.type() == FinisherConfig.Type.REAVER) { // shiver, then get dragged into the ground
+			hAngle = c.reaverHorizontalAngle;
+			vAngle = c.reaverVerticalAngle;
+			float start = (float) c.sinkStart;
+			if (p < start) {
+				vertical = 0;
+				poseStack.translate(0.02F * c.shiver * Mth.sin(p * 120) / scale, 0, 0);
 			} else {
-				float t = (p - 0.35F) / 0.65F;
-				poseStack.translate(0, -(state.boundingBoxHeight + 0.3F) * t * t * t / scale, 0); // ease-in cubic
+				float t = (p - start) / (1 - start);
+				vertical = -c.sinkDepth * t * t * t; // ease-in cubic
 			}
-		} else { // rise along a slanted path, drifting backwards and leaning back by the rise angle
-			float eased = 1 - (1 - p) * (1 - p) * (1 - p); // ease-out cubic
-			float angle = (float) Math.toRadians(FinisherConfig.INSTANCE.riseAngle);
-			float yaw = (float) Math.toRadians(f.yRot());
-			float fx = -Mth.sin(yaw), fz = Mth.cos(yaw); // facing direction
-			float up = (float) FinisherConfig.INSTANCE.riseHeight * eased;
-			float back = up * Mth.sin(angle) / Math.max(0.2F, Mth.cos(angle));
-			poseStack.translate(-fx * back / scale, up / scale, -fz * back / scale);
-			// lean the top backwards: rotate around the body's left-right axis, pivoting at the feet
-			float lean = angle * FinisherPose.blendTime(p);
-			poseStack.mulPose(new Quaternionf().rotationAxis(lean, -fz, 0, fx));
+		} else { // rise along the slanted path
+			hAngle = c.championsHorizontalAngle;
+			vAngle = c.championsVerticalAngle;
+			vertical = c.riseHeight * (1 - (1 - p) * (1 - p) * (1 - p)); // ease-out cubic
 		}
+		// pose is already scaled, so divide offsets by scale
+		Vec3 o = FinisherPose.slantOffset(f.yRot(), hAngle, vAngle, vertical);
+		poseStack.translate(o.x / scale, o.y / scale, o.z / scale);
+		// lean the top toward the slant direction, pivoting at the feet; axis k with k x up = direction
+		Vec3 d = FinisherPose.slantDirection(f.yRot(), hAngle);
+		float lean = (float) Math.toRadians(vAngle) * FinisherPose.blendTime(p);
+		poseStack.mulPose(new Quaternionf().rotationAxis(lean, (float) d.z, 0, (float) -d.x));
 	}
 
 	// Args: model, state, poseStack, renderType, light, overlay, tint, sprite, outline, crumbling

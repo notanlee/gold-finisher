@@ -8,6 +8,7 @@ import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -16,6 +17,7 @@ import org.jspecify.annotations.Nullable;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -35,7 +37,6 @@ import java.util.Map;
 public class GoldFinisher implements ClientModInitializer {
 	public static final String MOD_ID = "goldfinisher";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	private static final DustParticleOptions VOID_DUST = new DustParticleOptions(0x7A2BBF, 1.2F);
 
 	/**
 	 * One running finisher. start is game time (not wall clock) so replays/pausing stay in sync.
@@ -49,6 +50,8 @@ public class GoldFinisher implements ClientModInitializer {
 	public static final Map<Integer, Finisher> ACTIVE = new HashMap<>();
 	/** entityId -> removal the server asked for, held back until the finisher ends. */
 	public static final Map<Integer, Entity.RemovalReason> DEFERRED_REMOVALS = new HashMap<>();
+	/** stand-in corpse id -> the real (hidden) player id, see FinisherCorpse. */
+	private static final Map<Integer, Integer> CORPSES = new HashMap<>();
 
 	private static KeyMapping openMenu;
 	private static ClientLevel lastLevel;
@@ -66,7 +69,14 @@ public class GoldFinisher implements ClientModInitializer {
 	public static void onDeath(LivingEntity entity) {
 		FinisherConfig cfg = FinisherConfig.INSTANCE;
 		if (!cfg.enabled || !shouldTrigger(entity, cfg.trigger)) return;
-		start(entity);
+		// Dead players: play on a client-only stand-in so an instant respawn (same entity id) can't cut it off.
+		// (Health is still synced as > 0 here, the death event arrives first, so don't use isDeadOrDying.)
+		LivingEntity body = entity;
+		if (entity instanceof AbstractClientPlayer player) {
+			body = FinisherCorpse.spawn(player);
+			CORPSES.put(body.getId(), player.getId());
+		}
+		start(body);
 	}
 
 	private static boolean shouldTrigger(LivingEntity entity, FinisherConfig.Trigger trigger) {
@@ -80,15 +90,22 @@ public class GoldFinisher implements ClientModInitializer {
 
 	public static void start(LivingEntity entity) {
 		FinisherConfig cfg = FinisherConfig.INSTANCE;
-		FinisherConfig.Color material = cfg.color == FinisherConfig.Color.RANDOM
-				? FinisherConfig.Color.CLASSIC[entity.getRandom().nextInt(FinisherConfig.Color.CLASSIC.length)]
-				: cfg.color;
-		int color = material == FinisherConfig.Color.CUSTOM ? cfg.customColor : material.rgb;
-		Finisher f = new Finisher(entity.level().getGameTime(), cfg.type, color,
-				material == FinisherConfig.Color.RAINBOW, entity.position(), entity.yBodyRot, material.texture);
+		Finisher f;
+		if (cfg.type == FinisherConfig.Type.REAVER) {
+			int color = cfg.reaverColor == FinisherConfig.ReaverColor.CUSTOM ? cfg.reaverCustomColor : cfg.reaverColor.rgb;
+			f = new Finisher(entity.level().getGameTime(), cfg.type, color, false, entity.position(), entity.yBodyRot, null);
+		} else {
+			FinisherConfig.Color material = cfg.color == FinisherConfig.Color.RANDOM
+					? FinisherConfig.Color.CLASSIC[entity.getRandom().nextInt(FinisherConfig.Color.CLASSIC.length)]
+					: cfg.color;
+			int color = material == FinisherConfig.Color.CUSTOM ? cfg.customColor : material.rgb;
+			f = new Finisher(entity.level().getGameTime(), cfg.type, color,
+					material == FinisherConfig.Color.RAINBOW, entity.position(), entity.yBodyRot, material.texture);
+		}
 		ACTIVE.put(entity.getId(), f);
 		Level level = entity.level();
 		if (cfg.totemSound) playSound(level, f.pos(), SoundEvents.TOTEM_USE, 0.8F, 1.0F);
+		if (cfg.totemParticles) totemBurst(level, entity, f.pos(), cfg);
 		if (!cfg.sounds) return;
 		if (f.type() == FinisherConfig.Type.REAVER) {
 			playSound(level, f.pos(), SoundEvents.SOUL_ESCAPE.value(), 2.0F, 0.8F);
@@ -130,6 +147,8 @@ public class GoldFinisher implements ClientModInitializer {
 			lastLevel = mc.level;
 			ACTIVE.clear();
 			DEFERRED_REMOVALS.clear();
+			CORPSES.clear();
+			FinisherCorpse.HIDDEN.clear();
 		}
 		if (mc.level == null || mc.isPaused()) return;
 
@@ -144,6 +163,7 @@ public class GoldFinisher implements ClientModInitializer {
 			if (entity == null || elapsed < 0) { // gone, or time jumped backwards in a replay
 				it.remove();
 				DEFERRED_REMOVALS.remove(e.getKey());
+				dropCorpse(mc.level, e.getKey());
 				continue;
 			}
 			if (elapsed < cfg.durationTicks) {
@@ -156,10 +176,30 @@ public class GoldFinisher implements ClientModInitializer {
 			else burst(mc.level, entity, f, cfg);
 			Entity.RemovalReason reason = DEFERRED_REMOVALS.remove(e.getKey());
 			if (reason != null) mc.level.removeEntity(e.getKey(), reason);
+			dropCorpse(mc.level, e.getKey());
 			if (entity == mc.player && previewRestoreCamera != null) {
 				mc.options.setCameraType(previewRestoreCamera);
 				previewRestoreCamera = null;
 			}
+		}
+	}
+
+	/** If id is a stand-in corpse: remove it and show the real player again. */
+	private static void dropCorpse(ClientLevel level, int id) {
+		Integer original = CORPSES.remove(id);
+		if (original == null) return;
+		FinisherCorpse.HIDDEN.remove(original);
+		level.removeEntity(id, Entity.RemovalReason.DISCARDED);
+	}
+
+	/** Totem-of-undying pop around the frozen body, like a used totem. */
+	private static void totemBurst(Level level, Entity e, Vec3 p, FinisherConfig cfg) {
+		RandomSource r = level.random;
+		int n = 15 * particleScale(cfg);
+		for (int i = 0; i < n; i++) {
+			level.addParticle(ParticleTypes.TOTEM_OF_UNDYING, p.x + (r.nextDouble() - 0.5) * e.getBbWidth(),
+					p.y + r.nextDouble() * e.getBbHeight(), p.z + (r.nextDouble() - 0.5) * e.getBbWidth(),
+					(r.nextDouble() - 0.5) * 0.8, r.nextDouble() * 0.6 + 0.2, (r.nextDouble() - 0.5) * 0.8);
 		}
 	}
 
@@ -193,15 +233,12 @@ public class GoldFinisher implements ClientModInitializer {
 	private static void burst(ClientLevel level, Entity e, Finisher f, FinisherConfig cfg) {
 		RandomSource r = level.random;
 		DustParticleOptions dust = new DustParticleOptions(color(f, e, 0), 1.2F);
-		// Body centre at the end of the slanted rise: drifted back along the path, plus the lean (matches LivingEntityRendererMixin)
-		double angle = Math.toRadians(cfg.riseAngle), yaw = Math.toRadians(f.yRot());
-		double back = cfg.riseHeight * Math.tan(Math.min(angle, Math.toRadians(78))) + e.getBbHeight() / 2 * Math.sin(angle);
+		// Body centre at the end of the slanted rise, leaned over (matches LivingEntityRendererMixin)
 		Vec3 p = f.pos();
-		double cx = p.x + Math.sin(yaw) * back, cz = p.z - Math.cos(yaw) * back;
-		double cy = p.y + e.getBbHeight() / 2 * Math.cos(angle) + cfg.riseHeight;
+		Vec3 c = endCentre(p, e, f.yRot(), cfg.championsHorizontalAngle, cfg.championsVerticalAngle, cfg.riseHeight);
 		int n = 20 * particleScale(cfg);
 		for (int i = 0; i < n; i++) {
-			level.addParticle(i % 3 == 0 ? ParticleTypes.WAX_ON : dust, cx, cy, cz,
+			level.addParticle(i % 3 == 0 ? ParticleTypes.WAX_ON : dust, c.x, c.y, c.z,
 					(r.nextDouble() - 0.5) * 0.6, (r.nextDouble() - 0.3) * 0.6, (r.nextDouble() - 0.5) * 0.6);
 		}
 		if (cfg.sounds) {
@@ -210,25 +247,38 @@ public class GoldFinisher implements ClientModInitializer {
 		}
 	}
 
+	/** Centre of a body of e's height after moving {@code vertical} along the slanted path and leaning by vDeg. */
+	private static Vec3 endCentre(Vec3 feet, Entity e, float yRot, double hDeg, double vDeg, double vertical) {
+		double lean = Math.toRadians(vDeg), half = e.getBbHeight() / 2;
+		Vec3 d = FinisherPose.slantDirection(yRot, hDeg);
+		return feet.add(FinisherPose.slantOffset(yRot, hDeg, vDeg, vertical))
+				.add(d.scale(half * Math.sin(lean))).add(0, half * Math.cos(lean), 0);
+	}
+
 	/** Reaver: dragged into the void. Inward spiral around the body + a widening ink/portal ring on the ground. */
 	private static void reaverTick(ClientLevel level, Entity e, Finisher f, long t, FinisherConfig cfg) {
 		RandomSource r = level.random;
 		Vec3 p = f.pos();
 		int n = particleScale(cfg);
 		float progress = Math.min(1F, (float) t / cfg.durationTicks);
-		double radius = (e.getBbWidth() * 1.2 + 0.4) * (1 - progress * 0.8);
-		for (int i = 0; i < n * 3; i++) {
-			double a = t * 0.6 + i * Math.PI * 2 / (n * 3);
-			double x = Math.cos(a) * radius, z = Math.sin(a) * radius;
-			// tangential + inward velocity so it visibly swirls toward the body
-			double vx = (-Math.sin(a) - Math.cos(a) * 0.5) * 0.08, vz = (Math.cos(a) - Math.sin(a) * 0.5) * 0.08;
-			ParticleOptions type = switch (i % 3) {
-				case 0 -> ParticleTypes.SOUL;
-				case 1 -> ParticleTypes.SMOKE;
-				default -> VOID_DUST;
-			};
-			level.addParticle(type, p.x + x, p.y + r.nextDouble() * e.getBbHeight(), p.z + z, vx, -0.02, vz);
+		if (cfg.souls) {
+			// dust a few shades lighter than the body so it reads against it
+			DustParticleOptions dust = new DustParticleOptions(ARGB.scaleRGB(f.color(), 2.6F), 1.2F);
+			double radius = (e.getBbWidth() * 1.2 + 0.4) * (1 - progress * 0.8);
+			for (int i = 0; i < n * 3; i++) {
+				double a = t * 0.6 + i * Math.PI * 2 / (n * 3);
+				double x = Math.cos(a) * radius, z = Math.sin(a) * radius;
+				// tangential + inward velocity so it visibly swirls toward the body
+				double vx = (-Math.sin(a) - Math.cos(a) * 0.5) * 0.08, vz = (Math.cos(a) - Math.sin(a) * 0.5) * 0.08;
+				ParticleOptions type = switch (i % 3) {
+					case 0 -> ParticleTypes.SOUL;
+					case 1 -> ParticleTypes.SMOKE;
+					default -> dust;
+				};
+				level.addParticle(type, p.x + x, p.y + r.nextDouble() * e.getBbHeight(), p.z + z, vx, -0.02, vz);
+			}
 		}
+		if (!cfg.portalRing) return;
 		double ring = 0.5 + progress * 2.0;
 		for (int i = 0; i < n * 4; i++) {
 			double a = r.nextDouble() * Math.PI * 2;
@@ -240,14 +290,16 @@ public class GoldFinisher implements ClientModInitializer {
 	private static void reaverEnd(ClientLevel level, Entity e, Finisher f, FinisherConfig cfg) {
 		RandomSource r = level.random;
 		Vec3 p = f.pos();
-		double cy = p.y + e.getBbHeight() / 2;
+		// where the body went under: the top of the slanted sink path, at ground level
+		Vec3 c = p.add(FinisherPose.slantOffset(f.yRot(), cfg.reaverHorizontalAngle, cfg.reaverVerticalAngle, -cfg.sinkDepth)
+				.multiply(1, 0, 1)).add(0, e.getBbHeight() / 2, 0);
 		int n = 10 * particleScale(cfg);
 		for (int i = 0; i < n; i++) {
-			level.addParticle(ParticleTypes.LARGE_SMOKE, p.x + (r.nextDouble() - 0.5) * 0.6, cy + (r.nextDouble() - 0.5),
-					p.z + (r.nextDouble() - 0.5) * 0.6, 0, 0.05, 0);
+			level.addParticle(ParticleTypes.LARGE_SMOKE, c.x + (r.nextDouble() - 0.5) * 0.6, c.y + (r.nextDouble() - 0.5),
+					c.z + (r.nextDouble() - 0.5) * 0.6, 0, 0.05, 0);
 		}
 		for (int i = 0; i < n * 3; i++) {
-			level.addParticle(ParticleTypes.PORTAL, p.x, cy, p.z,
+			level.addParticle(ParticleTypes.PORTAL, c.x, c.y, c.z,
 					(r.nextDouble() - 0.5) * 2, (r.nextDouble() - 0.5) * 2, (r.nextDouble() - 0.5) * 2);
 		}
 		if (cfg.sounds) playSound(level, p, SoundEvents.ENDERMAN_TELEPORT, 1.0F, 0.5F);

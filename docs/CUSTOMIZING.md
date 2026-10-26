@@ -12,23 +12,45 @@ There are three ways to change how the finishers look, from no code at all to ed
 
 Every menu option is a field here. You can edit the file while the game is closed.
 
+**Shared**
+
 | Field | Type / range | Default | What it does |
 |---|---|---|---|
 | `enabled` | bool | `true` | Turns the finisher on or off |
 | `type` | `CHAMPIONS`, `REAVER` | `CHAMPIONS` | Which finisher plays |
 | `trigger` | `MY_KILLS`, `PLAYER_KILLS`, `ALL_DEATHS` | `PLAYER_KILLS` | Which deaths get a finisher. Use `PLAYER_KILLS` or `ALL_DEATHS` in replays. |
+| `durationTicks` | 20–100 (20 = 1 s) | `40` | Length of the whole finisher |
+| `animationSpeed` | 0.25–3 | `1.0` | How fast limbs and lean move into the pose. At 1 the pose is reached at 40% of the finisher. |
+| `particles` | `LOW`, `MEDIUM`, `HIGH` | `MEDIUM` | Particle amount |
+| `sounds` | bool | `true` | Finisher sounds |
+| `totemSound` | bool | `true` | Totem pop sound on death |
+| `totemParticles` | bool | `true` | Totem pop particles on death |
+
+**Champions**
+
+| Field | Type / range | Default | What it does |
+|---|---|---|---|
 | `color` | `GOLD`, `DIAMOND`, `EMERALD`, `AMETHYST`, `REDSTONE`, `RAINBOW`, `CUSTOM`, `RANDOM` | `GOLD` | Ore colors draw the real block texture. `RANDOM` picks an ore on each kill. |
 | `customColor` | int RGB (e.g. `255` = blue, `16766538` = `0xFFD24A`) | `0xFFD24A` | Color used when `color` is `CUSTOM` |
 | `style` | `SOLID_GOLD` ("Solid statue"), `GOLD_TINT` ("Color tint") | `SOLID_GOLD` | Solid statue texture, or the entity's own skin tinted |
-| `durationTicks` | 20–100 (20 = 1 s) | `40` | Length of the whole finisher |
-| `animationSpeed` | 0.25–3 | `1.0` | How fast limbs and lean move into the pose. At 1 the pose is reached at 40% of the finisher. |
-| `riseHeight` | 0–2 blocks | `1.0` | How high Champions floats |
-| `riseAngle` | 0–60° | `25` | Champions: how far the body leans back and how much the rise path slants backwards |
-| `glow` | bool | `true` | Full-bright Champions statue (Reaver is never lit up) |
-| `beam` | bool | `true` | Champions light beam |
-| `particles` | `LOW`, `MEDIUM`, `HIGH` | `MEDIUM` | Particle amount |
-| `sounds` | bool | `true` | Finisher sounds |
-| `totemSound` | bool | `true` | Totem pop on death |
+| `riseHeight` | 0–2 blocks | `1.0` | How high the body floats |
+| `championsHorizontalAngle` | −180…180° | `0` | Which way the slant points around the body: 0 = backwards, ±90 = to a side, 180 = forwards |
+| `championsVerticalAngle` | −60…60° | `25` | How much the rise path slants from straight up and the body leans; negative flips it |
+| `glow` | bool | `true` | Full-bright statue |
+| `beam` | bool | `true` | Light beam |
+
+**Reaver**
+
+| Field | Type / range | Default | What it does |
+|---|---|---|---|
+| `reaverColor` | `VOID`, `BLOOD`, `ABYSS`, `CUSTOM` | `VOID` | Body color (Reaver is never lit up) |
+| `reaverCustomColor` | int RGB | `0x2A0F3D` | Color used when `reaverColor` is `CUSTOM` |
+| `sinkDepth` | 0.5–3 blocks | `2.3` | How deep the body is dragged |
+| `sinkStart` | 0.1–0.8 | `0.35` | Fraction of the finisher spent shivering before the sink |
+| `shiver` | 0–2 | `1.0` | Shiver and arm-tremble strength |
+| `reaverHorizontalAngle` / `reaverVerticalAngle` | −180…180° / −60…60° | `0` / `0` | Same as Champions, for the sink path |
+| `portalRing` | bool | `true` | Widening void ring on the ground |
+| `souls` | bool | `true` | Soul, smoke and dust swirl |
 
 ---
 
@@ -100,6 +122,8 @@ When EMF animates an entity, the mod's built-in Java pose turns off for it, so t
 | Particles and sounds per finisher type | `GoldFinisher.effectsTick` / `burst` / `start` |
 | Which deaths trigger (works in replays) | `GoldFinisher.shouldTrigger`, `mixin/LivingEntityMixin` |
 | Body kept until the finisher ends | `mixin/ClientLevelMixin` |
+| Stand-in body for dead players (instant-respawn servers reuse the entity id), hides the real player meanwhile | `FinisherCorpse`, `mixin/EntityRenderDispatcherMixin` |
+| Slanted path math (horizontal / vertical angle) shared by rise, sink and end bursts | `FinisherPose.slantDirection` / `slantOffset` |
 | EMF variables | `compat/EmfCompat` |
 
 ### Add a menu option
@@ -109,7 +133,7 @@ When EMF animates an entity, the mod's built-in Java pose turns off for it, so t
 
 ### Add a finisher type
 1. Add a constant to `FinisherConfig.Type` and a lang key `goldfinisher.option.type.<name>`.
-2. Add a branch for it in `FinisherPose.apply` (pose), in `LivingEntityRendererMixin.goldfinisher$rise` (movement) and in `goldfinisher$gold` (texture/color).
+2. Add a branch for it in `FinisherPose.apply` (pose), in `LivingEntityRendererMixin.goldfinisher$rise` (movement) and in `goldfinisher$gold` (texture/color). Give it its own config fields and a menu section in `FinisherScreen.init()`, like Reaver.
 3. Give it particles and sounds in `GoldFinisher.effectsTick`, `burst` and `start`.
 4. For EMF, give it a `goldfinisher_type` number in `EmfCompat` and a branch in the `.jem` files.
 

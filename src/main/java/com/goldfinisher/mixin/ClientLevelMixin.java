@@ -1,5 +1,6 @@
 package com.goldfinisher.mixin;
 
+import com.goldfinisher.FinisherCorpse;
 import com.goldfinisher.GoldFinisher;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
@@ -19,10 +20,12 @@ public abstract class ClientLevelMixin {
 		}
 	}
 
-	// A new entity reusing this id (e.g. replay seeking) must replace the old body, not be blocked by it.
+	// A new entity reusing this id (replay seeking, a respawned player) must replace the old body, not be blocked by it.
+	// Dead players already handed their finisher to a stand-in corpse (FinisherCorpse), so that keeps playing.
 	@Inject(method = "addEntity", at = @At("HEAD"))
 	private void goldfinisher$dropStale(Entity entity, CallbackInfo ci) {
 		GoldFinisher.ACTIVE.remove(entity.getId());
 		GoldFinisher.DEFERRED_REMOVALS.remove(entity.getId());
+		FinisherCorpse.HIDDEN.remove(entity.getId());
 	}
 }

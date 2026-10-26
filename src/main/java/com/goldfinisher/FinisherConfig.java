@@ -36,23 +36,56 @@ public class FinisherConfig {
 		}
 	}
 
+	/** Reaver body colors. */
+	public enum ReaverColor {
+		VOID(0x2A0F3D), BLOOD(0x4A0A0A), ABYSS(0x0B1A3D), CUSTOM(0x2A0F3D);
+
+		public final int rgb;
+
+		ReaverColor(int rgb) {
+			this.rgb = rgb;
+		}
+	}
+
+	// shared
 	public boolean enabled = true;
 	public Type type = Type.CHAMPIONS;
-	public Color color = Color.GOLD;
-	public int customColor = 0xFFD24A;
-	public boolean totemSound = true;
 	public Trigger trigger = Trigger.PLAYER_KILLS;
 	public int durationTicks = 40;
-	public double riseHeight = 1.0;
-	/** Champions: degrees the body leans back and the rise path slants backwards. */
-	public double riseAngle = 25;
 	/** How fast limbs and lean move into the pose: 1 = reaches it at 40% of the finisher. */
 	public double animationSpeed = 1.0;
-	public Style style = Style.SOLID_GOLD;
-	public boolean glow = true;
-	public boolean beam = true;
 	public Particles particles = Particles.MEDIUM;
 	public boolean sounds = true;
+	public boolean totemSound = true;
+	public boolean totemParticles = true;
+
+	// champions
+	public Color color = Color.GOLD;
+	public int customColor = 0xFFD24A;
+	public Style style = Style.SOLID_GOLD;
+	public double riseHeight = 1.0;
+	/**
+	 * Slant of the path and lean of the body, in degrees. Vertical: tilt away from straight up/down (negative = the
+	 * other side). Horizontal: which way the tilt points around the body, 0 = backwards, 90 = to its side, 180 = forwards.
+	 */
+	public double championsVerticalAngle = 25;
+	public double championsHorizontalAngle = 0;
+	public boolean glow = true;
+	public boolean beam = true;
+
+	// reaver
+	public ReaverColor reaverColor = ReaverColor.VOID;
+	public int reaverCustomColor = 0x2A0F3D;
+	/** Blocks the body sinks into the ground. */
+	public double sinkDepth = 2.3;
+	/** Fraction of the finisher spent shivering before the sink starts. */
+	public double sinkStart = 0.35;
+	/** Shiver strength multiplier, 0 = still. */
+	public double shiver = 1.0;
+	public double reaverVerticalAngle = 0;
+	public double reaverHorizontalAngle = 0;
+	public boolean portalRing = true;
+	public boolean souls = true;
 
 	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("goldfinisher.json");
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
