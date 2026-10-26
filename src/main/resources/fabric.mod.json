@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "goldfinisher",
+	"version": "${version}",
+	"name": "Gold Finisher",
+	"description": "Client-side Valorant-style death finishers: Champions (colored statue rises and shatters) and Reaver (dragged into the void). Works on any server, with EMF animations and in ReplayMod/Flashback.",
+	"authors": ["notanlee"],
+	"contact": {
+		"homepage": "https://github.com/notanlee/gold-finisher",
+		"sources": "https://github.com/notanlee/gold-finisher",
+		"issues": "https://github.com/notanlee/gold-finisher/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/goldfinisher/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.goldfinisher.GoldFinisher", "com.goldfinisher.compat.EmfCompat"],
+		"modmenu": ["com.goldfinisher.ModMenuCompat"]
+	},
+	"mixins": ["goldfinisher.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*",
+		"entity_model_features": "*"
+	}
+}

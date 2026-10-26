@@ -1,0 +1,46 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+repositories {
+	maven { url = 'https://maven.terraformersmc.com/' } // Mod Menu
+	maven { url = 'https://api.modrinth.com/maven' } // Flashback, EMF/ETF
+	mavenCentral() // commons-math3 for Flashback (dev runtime)
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+	// Flashback in the dev client (replay testing), only when its jar-in-jar libs are present in libs/dev/
+	// (not committed: extract them from Flashback's META-INF/jars, see docs/CUSTOMIZING.md).
+	if (file("libs/dev/mixinsquared-fabric-0.3.7-beta.1.jar").exists()) {
+		modLocalRuntime "maven.modrinth:flashback:${project.flashback_version}"
+		modLocalRuntime files("libs/dev/mixinsquared-fabric-0.3.7-beta.1.jar", "libs/dev/mixinconstraints-1.0.8.jar", "libs/dev/lattice-1.3.1.jar")
+		localRuntime "org.apache.commons:commons-math3:3.6.1"
+	}
+	// Optional EMF integration (compat/EmfCompat), only loaded when EMF is installed
+	modCompileOnly "maven.modrinth:entity-model-features:${project.emf_version}"
+	modLocalRuntime "maven.modrinth:entity-model-features:${project.emf_version}"
+	modCompileOnly "maven.modrinth:entitytexturefeatures:${project.etf_version}"
+	modLocalRuntime "maven.modrinth:entitytexturefeatures:${project.etf_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
