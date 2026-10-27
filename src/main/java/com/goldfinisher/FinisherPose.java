@@ -40,12 +40,7 @@ public final class FinisherPose {
 				blend(m.rightLeg, w, m.rightLeg.xRot, 0.12F);
 				blend(m.leftLeg, w, m.leftLeg.xRot, -0.12F);
 			}
-			case AEMONDIR -> { // struck from the sky: crumples to its knees, head bowed, arms hanging forward
-				blend(m.rightArm, w, -0.45F, 0.15F);
-				blend(m.leftArm, w, -0.35F, -0.15F);
-				blend(m.head, w, 0.6F, m.head.zRot);
-				blend(m.rightLeg, w, -1.4F, 0.1F);
-				blend(m.leftLeg, w, -1.4F, -0.1F);
+			case AEMONDIR -> { // stands frozen where it died until the explosion: no extra pose
 			}
 			case CHAMPIONS -> {
 				if (FinisherConfig.INSTANCE.championsVersion == FinisherConfig.ChampionsVersion.V2022) {
@@ -84,10 +79,9 @@ public final class FinisherPose {
 				float t = Mth.clamp((p - start) / Math.max(0.05F, 0.8F - start), 0, 1);
 				yield new Motion(-c.sinkDepth * t * t * t, c.reaverHorizontalAngle, c.reaverVerticalAngle, lean, shiver, p < 0.82F);
 			}
-			case AEMONDIR -> { // crumples forward to its knees after the first strike; the explosion takes it
-				float k = smooth(Mth.clamp((p - 0.12F) / 0.16F, 0, 1));
-				Vec3 hit = p > 0.33F && p < 0.4F ? new Vec3(0, 0.03 * Mth.sin(p * 300), 0) : Vec3.ZERO;
-				yield new Motion(-0.45 * k, 180, 25, k, hit, !AemondirFx.bodyGone(p));
+			case AEMONDIR -> { // stays standing, jolts when the strikes land; the explosion takes it
+				Vec3 hit = p > 0.12F && p < 0.16F || p > 0.37F && p < 0.41F ? new Vec3(0, 0.03 * Mth.sin(p * 300), 0) : Vec3.ZERO;
+				yield new Motion(0, 0, 0, 0, hit, !AemondirFx.bodyGone(p));
 			}
 			case CHAMPIONS -> {
 				double rh = c.riseHeight;

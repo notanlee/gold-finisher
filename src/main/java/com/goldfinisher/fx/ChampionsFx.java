@@ -24,11 +24,10 @@ import java.util.List;
 
 /**
  * Champions finishers, timed from the 2022 and 2023 videos (beat sheets in docs/CUSTOMIZING.md).
- * 2023: ground glyph, gold beam, ring of gold panels + emblem above; the body rises into the ring, which opens like wings.
+ * 2023: ground glyph and a gold beam; the body hovers in it, then rises up and bursts.
  * 2022: white flash, dark dome with a lightning web, a gold weapon drops point-down into the body, shatters.
  */
 public final class ChampionsFx {
-	private static final int PANELS = 6;
 
 	private ChampionsFx() {}
 
@@ -43,8 +42,6 @@ public final class ChampionsFx {
 		} else {
 			Fx.disc(level, body.getId(), f.pos(), Blocks.BLACK_CONCRETE.defaultBlockState(), false);
 			for (int i = 0; i < 2; i++) FinisherProps.block(level, body.getId(), f.pos(), Blocks.GOLD_BLOCK.defaultBlockState(), true); // glyph X
-			for (int i = 0; i < PANELS; i++) FinisherProps.block(level, body.getId(), f.pos(), Blocks.GOLD_BLOCK.defaultBlockState(), true);
-			FinisherProps.item(level, body.getId(), f.pos(), new ItemStack(Items.NETHER_STAR), true); // emblem
 		}
 	}
 
@@ -63,7 +60,7 @@ public final class ChampionsFx {
 		Vec3 p = f.pos();
 		float h = body.getBbHeight();
 		List<Display> props = FinisherProps.of(body.getId());
-		if (props.size() < 2 + 2 + PANELS + 1) return;
+		if (props.size() < 2 + 2) return;
 
 		// ground glyph: dark disc + a gold X, appears at 0.1
 		float appear = Fx.smooth(Fx.window(u, 0.08F, 0.16F)) * (1 - Fx.window(u, 0.93F, 1F));
@@ -74,35 +71,17 @@ public final class ChampionsFx {
 					new Quaternionf().rotationY((float) Math.toRadians(45 + i * 90)), new Vector3f(1.9F * appear, 0.02F, 0.16F * appear));
 		}
 
-		// ring of panels above the head: slowly orbiting; at the climax it opens out and up like wings
-		float open = Fx.smooth(Fx.window(u, 0.68F, 0.92F));
-		float ringIn = Fx.easeOut(Fx.window(u, 0.1F, 0.22F)) * (1 - Fx.window(u, 0.95F, 1F));
-		float radius = 0.95F + open * 1.4F;
-		float ringY = h + 0.55F + open * 1.2F;
-		float spin = t * 0.04F;
-		for (int i = 0; i < PANELS; i++) {
-			float a = spin + i * Mth.TWO_PI / PANELS;
-			Quaternionf rot = new Quaternionf().rotationY(-a + Mth.HALF_PI).rotateX(-open * 1.1F); // face inward, tilt out
-			FinisherProps.move(props.get(4 + i), new Vector3f(Mth.cos(a) * radius, ringY, Mth.sin(a) * radius), rot,
-					new Vector3f(0.62F * ringIn, 0.82F * ringIn, 0.05F * ringIn));
-		}
-		// emblem above the ring
-		float emblem = ringIn * (1 - open * 0.3F);
-		FinisherProps.move(props.get(4 + PANELS), new Vector3f(0, ringY + 1.0F + open * 0.6F, 0),
-				new Quaternionf().rotationY(t * 0.05F), new Vector3f(0.9F * emblem, 0.9F * emblem, 0.9F * emblem));
-
 		int n = Fx.scale(cfg);
 		DustParticleOptions dust = new DustParticleOptions(rgb, 1.3F);
-		if (u > 0.08F && u < 0.95F) {
-			for (int i = 0; i < n; i++) { // sparkles around the statue
-				Fx.particle(level, dust, p.add((r.nextDouble() - 0.5) * 1.2, r.nextDouble() * h * 1.4, (r.nextDouble() - 0.5) * 1.2), 0, 0.03, 0);
+		if (u > 0.08F && u < 0.95F && t % 2 == 0) { // kept light: a few sparkles and a thin beam, not a cloud
+			for (int i = 0; i < n; i++) {
+				Fx.particle(level, dust, p.add((r.nextDouble() - 0.5) * 1.0, r.nextDouble() * h * 1.3, (r.nextDouble() - 0.5) * 1.0), 0, 0.03, 0);
 			}
-			if (cfg.beam) { // gold light beam from the glyph up through the ring
-				for (int i = 0; i < n * 2; i++) {
-					Fx.particle(level, ParticleTypes.END_ROD, p.add((r.nextDouble() - 0.5) * 0.5, r.nextDouble() * (ringY + 1), (r.nextDouble() - 0.5) * 0.5), 0, 0.06, 0);
+			if (cfg.beam) { // gold light beam from the glyph straight up
+				for (int i = 0; i < n; i++) {
+					Fx.particle(level, ParticleTypes.END_ROD, p.add((r.nextDouble() - 0.5) * 0.35, r.nextDouble() * (h + 3), (r.nextDouble() - 0.5) * 0.35), 0, 0.05, 0);
 				}
 			}
-			Fx.ring(level, dust, p.add(0, 0.05, 0), 1.05, 6 * n, t * 0.1);
 		}
 		if (Fx.at(t, total, 0.08)) { // the burst of gold light when it starts
 			Fx.particle(level, ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFD86A), p.add(0, h / 2, 0), 0, 0, 0);
@@ -125,14 +104,14 @@ public final class ChampionsFx {
 			Fx.sound(level, p, SoundEvents.FIREWORK_ROCKET_TWINKLE, 1F, 1.2F);
 		}
 		// dark dome above, with a white geometric web spreading over it
-		if (u > 0.15F && u < 0.85F) {
+		if (u > 0.15F && u < 0.85F && t % 2 == 0) { // kept sparse so the body stays readable
 			DustParticleOptions dome = new DustParticleOptions(0x3A0A12, 2.2F);
 			double radius = 2.6 * Fx.easeOut(Fx.window(u, 0.15F, 0.35F));
-			for (int i = 0; i < n * 6; i++) {
+			for (int i = 0; i < n * 2; i++) {
 				double a = r.nextDouble() * Math.PI * 2, b = r.nextDouble() * Math.PI / 2;
 				Fx.particle(level, dome, p.add(Math.cos(a) * Math.cos(b) * radius, 0.4 + Math.sin(b) * radius, Math.sin(a) * Math.cos(b) * radius), 0, 0, 0);
 			}
-			if (t % 3 == 0) { // one web strand: a chord between two points on the dome
+			if (t % 6 == 0) { // one web strand: a chord between two points on the dome
 				Vec3 a = domePoint(r, p, radius), b = domePoint(r, p, radius);
 				Fx.line(level, ParticleTypes.ELECTRIC_SPARK, a, b, 10);
 			}
@@ -148,7 +127,7 @@ public final class ChampionsFx {
 			Fx.sound(level, p, SoundEvents.LIGHTNING_BOLT_IMPACT, 1F, 1F);
 		}
 		if (u > 0.55F && u < 0.72F) {
-			for (int i = 0; i < n * 3; i++) { // jagged bolts radiating from the strike
+			for (int i = 0; i < n; i++) { // jagged bolts radiating from the strike
 				Vec3 from = p.add(0, h * 0.6, 0);
 				Vec3 to = from.add((r.nextDouble() - 0.5) * 4, (r.nextDouble() - 0.3) * 3, (r.nextDouble() - 0.5) * 4);
 				Fx.line(level, ParticleTypes.ELECTRIC_SPARK, from, to, 8);
@@ -196,7 +175,7 @@ public final class ChampionsFx {
 		Vec3 p = f.pos();
 		float h = body.getBbHeight();
 		int n = Fx.scale(FinisherConfig.INSTANCE);
-		Vec3 c = v2022() ? p.add(0, h * 0.6, 0) : p.add(0, h + 0.55 + 1.2 * FinisherConfig.INSTANCE.riseHeight, 0);
+		Vec3 c = v2022() ? p.add(0, h * 0.6, 0) : p.add(0, h / 2 + 2.75 * FinisherConfig.INSTANCE.riseHeight, 0);
 		Fx.particle(level, ColorParticleOption.create(ParticleTypes.FLASH, 0xFF000000 | rgb), c, 0, 0, 0);
 		DustParticleOptions dust = new DustParticleOptions(rgb, 1.4F);
 		for (int i = 0; i < 25 * n; i++) {

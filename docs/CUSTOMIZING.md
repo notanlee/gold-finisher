@@ -69,9 +69,9 @@ Every menu option is a field here. You can edit the file while the game is close
 ### Finisher timelines
 Rebuilt from the Valorant videos; times are fractions of the finisher's duration.
 - **Champions 2023:**
-  - 0.08 gold flash; ground glyph and panel ring appear.
-  - 0.1–0.68 hovers in the beam under the rotating panel ring + emblem.
-  - 0.68–0.95 climbs through the ring as it opens out and up.
+  - 0.08 gold flash; ground glyph appears.
+  - 0.1–0.68 hovers in the beam.
+  - 0.68–0.95 climbs up out of the beam.
   - 0.97 gone (flash and burst).
 - **Champions 2022:**
   - 0.1 white flash.
@@ -84,7 +84,7 @@ Rebuilt from the Valorant videos; times are fractions of the finisher's duration
   - 0.34 violet pillar erupts; the body sinks from `sinkStart`.
   - 0.68–0.9 pillar fades; 0.85–1 portal closes.
 - **Aemondir:**
-  - 0.08 and 0.33 light streaks from the sky (0.12–0.28 the body crumples to its knees).
+  - 0.08 and 0.33 light streaks from the sky (the body jolts on each hit).
   - 0.38 crystals.
   - 0.55 explosion takes the body.
   - 0.58 giant sword drops in and stays planted; 0.9–1 fades.
@@ -118,7 +118,7 @@ Each file attaches one empty part to `body` with `"attach": true`, so the **vani
 
 - `var.t` is the pose timeline (0 → 1). `var.w` is that timeline eased (ease-in-out cubic), so the motion is smooth.
 - Every line has the form `lerp(var.w, <vanilla value>, <finisher value>)`. Outside a finisher `var.w` is 0, so the mob animates exactly like vanilla.
-- The finisher value picks the pose by type: Aemondir (3) kneels, Reaver (2) reaches up, Champions 2022 (variant 0) is flung wide, Champions 2023 (variant 1) raises one hand.
+- The finisher value picks the pose by type: Aemondir (3) keeps the vanilla pose, Reaver (2) reaches up, Champions 2022 (variant 0) is flung wide, Champions 2023 (variant 1) raises one hand.
 
 ### Changing the pose
 

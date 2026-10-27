@@ -2,10 +2,10 @@
 
 A client-side Fabric mod for Minecraft **1.21.11** that plays Valorant-style finishers when a player kills something. The choreography and timing of each finisher were rebuilt frame by frame from the Valorant originals, using Minecraft models, floating block/item props and particles.
 
-- **Champions 2023:** a gold glyph opens on the ground. The body turns into an ore statue and floats in a beam of light under a ring of gold panels crowned by the Champions emblem, then rises up through the ring as it opens like wings.
+- **Champions 2023:** a gold glyph opens on the ground. The body turns into an ore statue and floats in a beam of light, then rises up and bursts into light.
 - **Champions 2022:** a white flash, then a dark dome with a lightning web forms over the body. A gold weapon drops point-down into it and the whole thing shatters into gold shards.
 - **Reaver:** a void portal opens under the body, shadow claws sweep up out of it, and a violet energy pillar erupts and swallows the body before the portal closes.
-- **Aemondir:** light streaks fall from the sky, the body crumples to its knees, and red crystals burst out of the ground. A huge gold explosion follows, and a giant gold sword is left planted where the body was, with a red pennant and molten ground.
+- **Aemondir:** light streaks fall from the sky and red crystals burst out of the ground around the body. A huge gold explosion follows, and a giant gold sword is left planted where the body was, with a red pennant and molten ground.
 
 Champions plays a note-block **beatbox** jingle that builds to a chime run and a bell hit. Each death also pops a totem, and totem particles keep rising for the whole finisher. The body stays where it died (no knockback from the last hit). Dead players are replaced by a client-side stand-in, so the finisher plays in full even on servers that respawn instantly.
 
