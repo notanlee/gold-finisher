@@ -1,6 +1,9 @@
 {
-	"credit": "Gold Finisher: finisher pose on the vanilla model (attach keeps vanilla geometry). Variables: goldfinisher_progress, goldfinisher_type (1 champions, 2 reaver), goldfinisher_active",
-	"textureSize": [64, 64],
+	"credit": "Gold Finisher: finisher poses on the vanilla model (attach keeps vanilla geometry). Variables: goldfinisher_progress, goldfinisher_type (1 champions, 2 reaver, 3 aemondir), goldfinisher_variant (champions 0 = 2022, 1 = 2023), goldfinisher_active, goldfinisher_speed",
+	"textureSize": [
+		64,
+		64
+	],
 	"models": [
 		{
 			"part": "body",
@@ -10,17 +13,16 @@
 				{
 					"var.t": "clamp(goldfinisher_progress * goldfinisher_speed / 0.4, 0, 1)",
 					"var.w": "if(goldfinisher_active, if(var.t < 0.5, 4 * var.t * var.t * var.t, 1 - pow(2 - 2 * var.t, 3) / 2), 0)",
-					"var.r": "if(goldfinisher_type > 1.5, 1, 0)",
 					"var.s": "0.08 * sin(goldfinisher_progress * 40)",
-					"right_arm.rx": "lerp(var.w, right_arm.rx, if(var.r > 0.5, -3.0, -3.05))",
-					"right_arm.rz": "lerp(var.w, right_arm.rz, if(var.r > 0.5, var.s, -0.12))",
-					"left_arm.rx": "lerp(var.w, left_arm.rx, if(var.r > 0.5, -3.0, 0.2))",
-					"left_arm.rz": "lerp(var.w, left_arm.rz, if(var.r > 0.5, 0 - var.s, 0.12))",
-					"head.rx": "lerp(var.w, head.rx, if(var.r > 0.5, -0.8, -0.55))",
-					"right_leg.rx": "lerp(var.w, right_leg.rx, if(var.r > 0.5, right_leg.rx, 0))",
-					"right_leg.rz": "lerp(var.w, right_leg.rz, if(var.r > 0.5, 0.12, 0))",
-					"left_leg.rx": "lerp(var.w, left_leg.rx, if(var.r > 0.5, left_leg.rx, 0.15))",
-					"left_leg.rz": "lerp(var.w, left_leg.rz, if(var.r > 0.5, -0.12, 0))"
+					"right_arm.rx": "lerp(var.w, right_arm.rx, if(goldfinisher_type > 2.5, -0.45, if(goldfinisher_type > 1.5, -3.0, if(goldfinisher_variant < 0.5, -0.3, -3.05))))",
+					"right_arm.rz": "lerp(var.w, right_arm.rz, if(goldfinisher_type > 2.5, 0.15, if(goldfinisher_type > 1.5, var.s, if(goldfinisher_variant < 0.5, 1.25, -0.12))))",
+					"left_arm.rx": "lerp(var.w, left_arm.rx, if(goldfinisher_type > 2.5, -0.35, if(goldfinisher_type > 1.5, -3.0, if(goldfinisher_variant < 0.5, -0.3, 0.2))))",
+					"left_arm.rz": "lerp(var.w, left_arm.rz, if(goldfinisher_type > 2.5, -0.15, if(goldfinisher_type > 1.5, 0 - var.s, if(goldfinisher_variant < 0.5, -1.25, 0.12))))",
+					"head.rx": "lerp(var.w, head.rx, if(goldfinisher_type > 2.5, 0.6, if(goldfinisher_type > 1.5, -0.8, if(goldfinisher_variant < 0.5, -0.7, -0.55))))",
+					"right_leg.rx": "lerp(var.w, right_leg.rx, if(goldfinisher_type > 2.5, -1.4, if(goldfinisher_type > 1.5, right_leg.rx, if(goldfinisher_variant < 0.5, 0, 0))))",
+					"right_leg.rz": "lerp(var.w, right_leg.rz, if(goldfinisher_type > 2.5, 0.1, if(goldfinisher_type > 1.5, 0.12, if(goldfinisher_variant < 0.5, 0.15, 0))))",
+					"left_leg.rx": "lerp(var.w, left_leg.rx, if(goldfinisher_type > 2.5, -1.4, if(goldfinisher_type > 1.5, left_leg.rx, if(goldfinisher_variant < 0.5, 0, 0.15))))",
+					"left_leg.rz": "lerp(var.w, left_leg.rz, if(goldfinisher_type > 2.5, -0.1, if(goldfinisher_type > 1.5, -0.12, if(goldfinisher_variant < 0.5, -0.15, 0))))"
 				}
 			]
 		}

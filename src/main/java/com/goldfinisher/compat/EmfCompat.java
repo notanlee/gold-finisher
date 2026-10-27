@@ -33,11 +33,14 @@ public final class EmfCompat implements ClientModInitializer {
 						return p == null ? 0F : p;
 					});
 			EMFAnimationApi.registerSingletonAnimationVariable(GoldFinisher.MOD_ID, "goldfinisher_type",
-					"Gold Finisher: 0 none, 1 champions, 2 reaver", (Supplier<Float>) () -> {
+					"Gold Finisher: 0 none, 1 champions, 2 reaver, 3 aemondir", (Supplier<Float>) () -> {
 						LivingEntityRenderState s = current();
 						GoldFinisher.Finisher f = s == null ? null : s.getData(FinisherPose.FINISHER);
-						return f == null ? 0F : f.type() == FinisherConfig.Type.REAVER ? 2F : 1F;
+						return f == null ? 0F : f.type().ordinal() + 1F;
 					});
+			EMFAnimationApi.registerSingletonAnimationVariable(GoldFinisher.MOD_ID, "goldfinisher_variant",
+					"Gold Finisher: Champions version, 0 = 2022, 1 = 2023",
+					(Supplier<Float>) () -> (float) FinisherConfig.INSTANCE.championsVersion.ordinal());
 			EMFAnimationApi.registerSingletonAnimationVariable(GoldFinisher.MOD_ID, "goldfinisher_speed",
 					"Gold Finisher: animation speed multiplier from the menu (1 = default)",
 					(Supplier<Float>) () -> (float) FinisherConfig.INSTANCE.animationSpeed);

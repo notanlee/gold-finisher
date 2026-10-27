@@ -1,11 +1,13 @@
 # Gold Finisher
 
-A client-side Fabric mod for Minecraft **1.21.11** that plays Valorant-style finishers when a player kills something.
+A client-side Fabric mod for Minecraft **1.21.11** that plays Valorant-style finishers when a player kills something. The choreography and timing of each finisher were rebuilt frame by frame from the Valorant originals, using Minecraft models, floating block/item props and particles.
 
-- **Champions** (Champions-collection style, without the trophy, mixed with the Roblox gold death): the body freezes and turns into a statue made of gold, diamond, emerald, amethyst or redstone block (or rainbow, or any custom color). One hand rises to the sky, the body leans back and floats up at an angle in a beam of light, then shatters.
-- **Reaver**: the body turns black-purple and reaches up while purple smoke and souls swirl around it. A dark portal opens and it's dragged down into the ground.
+- **Champions 2023:** a gold glyph opens on the ground. The body turns into an ore statue and floats in a beam of light under a ring of gold panels crowned by the Champions emblem, then rises up through the ring as it opens like wings.
+- **Champions 2022:** a white flash, then a dark dome with a lightning web forms over the body. A gold weapon drops point-down into it and the whole thing shatters into gold shards.
+- **Reaver:** a void portal opens under the body, shadow claws sweep up out of it, and a violet energy pillar erupts and swallows the body before the portal closes.
+- **Aemondir:** light streaks fall from the sky, the body crumples to its knees, and red crystals burst out of the ground. A huge gold explosion follows, and a giant gold sword is left planted where the body was, with a red pennant and molten ground.
 
-Each death also plays a totem pop. The body stays where it died: the knockback from the last hit is ignored on your screen. Dead players are replaced by a client-side stand-in body, so the finisher plays in full even on servers that respawn players instantly.
+Champions plays a note-block **beatbox** jingle that builds to a chime run and a bell hit. Each death also pops a totem, and totem particles keep rising for the whole finisher. The body stays where it died (no knockback from the last hit). Dead players are replaced by a client-side stand-in, so the finisher plays in full even on servers that respawn instantly.
 
 Only you need the mod. It works on any server (vanilla included) and inside **Flashback / ReplayMod** replays and exported videos.
 
@@ -20,65 +22,39 @@ Get the latest `goldfinisher-x.y.z.jar` from the [Releases](../../releases) page
 | [Fabric Loader](https://fabricmc.net/use/) 0.20.1+ | Required | Mod loader |
 | [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.11 | Required | Keybind, tick and render hooks |
 | [Mod Menu](https://modrinth.com/mod/modmenu) | Optional | Config button in the mod list (otherwise use **G**) |
-| [Entity Model Features](https://modrinth.com/mod/entity-model-features) + [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures) | Optional | EMF animates the finisher pose and gives resource packs [animation variables](docs/CUSTOMIZING.md#2-emf-animations-resource-packs). Without it, the built-in pose is used. |
+| [Entity Model Features](https://modrinth.com/mod/entity-model-features) + [Entity Texture Features](https://modrinth.com/mod/entitytexturefeatures) | Optional | EMF animates the finisher poses and gives resource packs [animation variables](docs/CUSTOMIZING.md#2-emf-animations-resource-packs). Without it, the built-in poses are used. |
 | [Flashback](https://modrinth.com/mod/flashback) / [ReplayMod](https://modrinth.com/mod/replaymod) | Optional | Finishers play back in replays. Set Trigger to "Any player kill" or "All deaths" there. |
 
 ## Settings
 
-Press **G** in game (rebindable under Controls → Gold Finisher) or use Mod Menu → Config. The menu shows the shared options plus only the options of the finisher you picked.
+Press **G** in game (rebindable under Controls → Gold Finisher) or use Mod Menu → Config. The menu has three tabs:
 
-**Shared**
+**General:** Enabled, Finisher (Champions / Reaver / Aemondir), Trigger (My kills / Any player kill / All deaths), Animation speed, Preview on me.
 
-| Option | What it does |
+**Finisher** (shows only the options of the finisher you picked):
+
+| Finisher | Options |
 |---|---|
-| Enabled | Turns the finisher on or off |
-| Finisher | **Champions** / **Reaver** (switches which options are shown) |
-| Trigger | **My kills** / **Any player kill** (default) / **All deaths** |
-| Duration | 1–5 s |
-| Animation speed | 0.25×–3×: how fast the limbs move into the pose |
-| Particles | Low / Medium / High |
-| Sounds | Finisher sounds |
-| Totem sound / Totem particles | Totem pop sound and particles on death |
-| Preview on me | Plays the finisher on yourself in third person |
+| Champions | Version (2022 / 2023), Duration, Color (Gold, Diamond, Emerald, Amethyst, Redstone with the real block texture; Rainbow; Custom RGB; Random ore), Style (Solid statue / Color tint), Rise height, Horizontal angle (−180°…180°), Vertical angle (−60°…60°) |
+| Reaver | Duration, Reaver color (Void purple / Blood red / Abyss blue / Custom RGB), Style, Sink depth, Sink start, Shiver, Horizontal / Vertical angle, Portal, Claws & souls, Energy pillar |
+| Aemondir | Duration, Style, Sword scale, Crystals, Explosion |
 
-**Champions**
-
-| Option | What it does |
-|---|---|
-| Color | Gold, Diamond, Emerald, Amethyst, Redstone (the real block texture), **Rainbow**, **Custom** (R/G/B sliders) or **Random** (a different ore each kill) |
-| Style | **Solid statue** (the whole body in the material) / **Color tint** (keeps the skin, tinted) |
-| Rise height | 0–2 blocks |
-| Horizontal angle | −180°…180°: which way the rise slants and the body leans (0 = backwards, ±90 = to a side, 180 = forwards) |
-| Vertical angle | −60°…60°: how much the rise slants and the body leans; negative flips it to the other side |
-| Glow | Full-bright statue |
-| Light beam | The light beam |
-
-**Reaver**
-
-| Option | What it does |
-|---|---|
-| Reaver color | Void purple, Blood red, Abyss blue or **Custom** (R/G/B sliders) |
-| Style | **Solid statue** (the whole body in the color) / **Color tint** (keeps the skin, tinted) |
-| Sink depth | 0.5–3 blocks into the ground |
-| Sink start | 10–80%: how long it shivers before it gets dragged down |
-| Shiver | 0–2×: shiver and arm tremble strength |
-| Horizontal / Vertical angle | Same as Champions, for the sink path |
-| Portal ring | The widening void ring on the ground |
-| Souls & smoke | The swirl around the body |
+**Effects & Sound:** Particles (Low / Medium / High), Sounds, Totem sound, Totem particles, Glow (Champions), Light beam (Champions).
 
 Settings are saved in `config/goldfinisher.json`.
 
 ## Customizing (resource packs and developers)
 
 See **[docs/CUSTOMIZING.md](docs/CUSTOMIZING.md)** for:
-- every config field and its range;
-- the EMF variables (`goldfinisher_progress`, `goldfinisher_type`, `goldfinisher_active`, `goldfinisher_speed`), the shipped `.jem` pose files, and how to change the pose or animate any mob;
-- where in the code poses, colors, particles and sounds live, and how to add a menu option, an ore color or a new finisher type.
+- every config field;
+- the EMF variables (`goldfinisher_progress`, `goldfinisher_type`, `goldfinisher_variant`, `goldfinisher_active`, `goldfinisher_speed`) and the shipped `.jem` pose files;
+- each finisher's timeline;
+- where poses, props, particles and sounds live in the code, and how to add a finisher.
 
 ## Known limits
+- Minecraft can't reproduce Valorant's shaders or meshes. Finishers match the original choreography, timing, colors and prop shapes using vanilla models, block/item displays and particles.
 - Armor follows the pose but keeps its own colors.
-- Non-humanoid mobs (pigs, spiders, …) become statues without a limb pose (EMF packs can add one).
-- Baby zombie variants have no EMF pose file yet.
+- Non-humanoid mobs (pigs, spiders, …) get the statue, props and effects without a limb pose (EMF packs can add one).
 - Not tested with Iris shaders.
 
 ## Building

@@ -15,7 +15,7 @@ public class FinisherConfig {
 	public enum Trigger { MY_KILLS, PLAYER_KILLS, ALL_DEATHS }
 	public enum Style { SOLID_GOLD, GOLD_TINT }
 	public enum Particles { LOW, MEDIUM, HIGH }
-	public enum Type { CHAMPIONS, REAVER }
+	public enum Type { CHAMPIONS, REAVER, AEMONDIR }
 	/**
 	 * Ore colors draw the body with their real block texture (rgb only colors the particles);
 	 * RAINBOW/CUSTOM tint the plain statue texture; RANDOM picks an ore per kill.
@@ -47,11 +47,12 @@ public class FinisherConfig {
 		}
 	}
 
+	public enum ChampionsVersion { V2022, V2023 }
+
 	// shared
 	public boolean enabled = true;
 	public Type type = Type.CHAMPIONS;
 	public Trigger trigger = Trigger.PLAYER_KILLS;
-	public int durationTicks = 40;
 	/** How fast limbs and lean move into the pose: 1 = reaches it at 40% of the finisher. */
 	public double animationSpeed = 1.0;
 	public Particles particles = Particles.MEDIUM;
@@ -60,6 +61,9 @@ public class FinisherConfig {
 	public boolean totemParticles = true;
 
 	// champions
+	public ChampionsVersion championsVersion = ChampionsVersion.V2023;
+	/** Length of each finisher in ticks (20 = 1 s); each has its own natural pacing. */
+	public int championsDuration = 100;
 	public Color color = Color.GOLD;
 	public int customColor = 0xFFD24A;
 	public Style style = Style.SOLID_GOLD;
@@ -73,20 +77,41 @@ public class FinisherConfig {
 	public boolean glow = true;
 	public boolean beam = true;
 
-	// reaver
+	// reaver: portal opens, shadow claws, violet pillar swallows the body
+	public int reaverDuration = 90;
 	public ReaverColor reaverColor = ReaverColor.VOID;
 	public int reaverCustomColor = 0x2A0F3D;
 	public Style reaverStyle = Style.SOLID_GOLD;
-	/** Blocks the body sinks into the ground. */
+	/** Blocks the body sinks into the portal. */
 	public double sinkDepth = 2.3;
-	/** Fraction of the finisher spent shivering before the sink starts. */
-	public double sinkStart = 0.35;
+	/** Fraction of the finisher before the sink starts. */
+	public double sinkStart = 0.4;
 	/** Shiver strength multiplier, 0 = still. */
 	public double shiver = 1.0;
 	public double reaverVerticalAngle = 0;
 	public double reaverHorizontalAngle = 0;
+	/** The portal disc on the ground. */
 	public boolean portalRing = true;
+	/** Shadow claws and soul swirl. */
 	public boolean souls = true;
+	/** The violet energy pillar. */
+	public boolean pillar = true;
+
+	// aemondir: sky strikes, crystals, explosion, a giant sword left planted
+	public int aemondirDuration = 120;
+	public Style aemondirStyle = Style.GOLD_TINT;
+	/** Size of the planted sword, in blocks of blade length roughly. */
+	public double swordScale = 3.0;
+	public boolean crystals = true;
+	public boolean explosion = true;
+
+	public int duration(Type t) {
+		return Math.max(20, switch (t) {
+			case CHAMPIONS -> championsDuration;
+			case REAVER -> reaverDuration;
+			case AEMONDIR -> aemondirDuration;
+		});
+	}
 
 	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("goldfinisher.json");
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
