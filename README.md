@@ -1,11 +1,11 @@
 # Gold Finisher
 
-A client-side Fabric mod for Minecraft **1.21.11** that plays Valorant-style finishers when a player kills something. The choreography and timing of each finisher were rebuilt frame by frame from the Valorant originals, using Minecraft models, floating block/item props and particles.
+A client-side Fabric mod for Minecraft **1.21.11** that plays Valorant-style finishers when a player kills something. The choreography and timing of each finisher were rebuilt frame by frame from the Valorant originals, using the Minecraft body model and particles.
 
 - **Champions 2023:** a gold glyph opens on the ground. The body turns into an ore statue and floats in a beam of light, then rises up and bursts into light.
-- **Champions 2022:** a white flash, then a dark dome with a lightning web forms over the body. A gold weapon drops point-down into it and the whole thing shatters into gold shards.
+- **Champions 2022:** a white flash, then a dark dome with a lightning web forms over the body. A gold streak drives down into it with lightning, and it shatters into gold shards.
 - **Reaver:** a void portal opens under the body, shadow claws sweep up out of it, and a violet energy pillar erupts and swallows the body before the portal closes.
-- **Aemondir:** light streaks fall from the sky and red crystals burst out of the ground around the body. A huge gold explosion follows, and a giant gold sword is left planted where the body was, with a red pennant and molten ground.
+- **Aemondir:** light streaks fall from the sky and red crystal spikes burst out of the ground around the body. A huge gold explosion follows, and a giant glowing sword drawn in gold particles is left planted where the body was, with a red pennant and embers.
 
 Champions plays a note-block **beatbox** jingle that builds to a chime run and a bell hit. Each death also pops a totem, and totem particles keep rising for the whole finisher. The body stays where it died (no knockback from the last hit). Dead players are replaced by a client-side stand-in, so the finisher plays in full even on servers that respawn instantly.
 
@@ -49,12 +49,12 @@ See **[docs/CUSTOMIZING.md](docs/CUSTOMIZING.md)** for:
 - every config field;
 - the EMF variables (`goldfinisher_progress`, `goldfinisher_type`, `goldfinisher_variant`, `goldfinisher_active`, `goldfinisher_speed`) and the shipped `.jem` pose files;
 - each finisher's timeline;
-- where poses, props, particles and sounds live in the code, and how to add a finisher.
+- where poses, particles and sounds live in the code, and how to add a finisher.
 
 ## Known limits
-- Minecraft can't reproduce Valorant's shaders or meshes. Finishers match the original choreography, timing, colors and prop shapes using vanilla models, block/item displays and particles.
+- Minecraft can't reproduce Valorant's shaders or meshes. Finishers match the original choreography, timing and colors using the vanilla body model and particles.
 - Armor follows the pose but keeps its own colors.
-- Non-humanoid mobs (pigs, spiders, …) get the statue, props and effects without a limb pose (EMF packs can add one).
+- Non-humanoid mobs (pigs, spiders, …) get the statue and effects without a limb pose (EMF packs can add one).
 - Not tested with Iris shaders.
 
 ## Building

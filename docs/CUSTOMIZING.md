@@ -157,9 +157,8 @@ When EMF animates an entity, the mod's built-in Java pose turns off for it, so t
 | Pose applied at draw time (armor follows) | `mixin/ModelFeatureRendererMixin` |
 | Ore colors (RGB + block texture) | `FinisherConfig.Color` |
 | Block textures tiled 4×4 so they're crisp on 64×64 skins | `OreTextures` |
-| Each finisher's choreography: props, particles, sounds (Champions beatbox included) | `fx/ChampionsFx`, `fx/ReaverFx`, `fx/AemondirFx` (helpers in `fx/Fx`) |
+| Each finisher's choreography: particles and sounds (Champions beatbox included) | `fx/ChampionsFx`, `fx/ReaverFx`, `fx/AemondirFx` (helpers in `fx/Fx`) |
 | Body motion per finisher (rise, sink, kneel, vanish) | `FinisherPose.motion` |
-| Floating block/item props (client-only display entities, interpolated) | `FinisherProps` |
 | Which deaths trigger (works in replays) | `GoldFinisher.shouldTrigger`, `mixin/LivingEntityMixin` |
 | Body kept until the finisher ends | `mixin/ClientLevelMixin` |
 | Stand-in body for dead players (instant-respawn servers reuse the entity id), hides the real player meanwhile | `FinisherCorpse`, `mixin/EntityRenderDispatcherMixin` |
@@ -174,7 +173,7 @@ When EMF animates an entity, the mod's built-in Java pose turns off for it, so t
 ### Add a finisher type
 1. Add a constant to `FinisherConfig.Type` and a lang key `goldfinisher.option.type.<name>`.
 2. Add a branch for it in `FinisherPose.apply` (pose), `FinisherPose.motion` (movement) and `LivingEntityRendererMixin.goldfinisher$gold` (texture/color). Give it its own config fields and a section in the Finisher tab of `FinisherScreen`, like Reaver.
-3. Write its choreography as a new `fx/<Name>Fx` class (`start`, `tick`, `end`, using `FinisherProps` for props) and dispatch to it in `GoldFinisher.start` and `tick`.
+3. Write its choreography as a new `fx/<Name>Fx` class (`tick`, `end`, optional `start`) and dispatch to it in `GoldFinisher.start` and `tick`.
 4. For EMF, give it a `goldfinisher_type` number in `EmfCompat` and a branch in the `.jem` files.
 
 ### Add an ore color

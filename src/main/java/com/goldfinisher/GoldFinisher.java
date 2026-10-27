@@ -107,11 +107,7 @@ public class GoldFinisher implements ClientModInitializer {
 		ClientLevel level = (ClientLevel) entity.level();
 		if (cfg.totemSound) level.playLocalSound(f.pos().x, f.pos().y, f.pos().z, SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.8F, 1.0F, false);
 		if (cfg.totemParticles) totem(level, entity, f.pos(), 15 * particleScale(cfg));
-		switch (f.type()) {
-			case CHAMPIONS -> ChampionsFx.start(level, entity, f);
-			case REAVER -> ReaverFx.start(level, entity, f);
-			case AEMONDIR -> AemondirFx.start(level, entity, f);
-		}
+		if (f.type() == FinisherConfig.Type.REAVER) ReaverFx.start(level, f);
 	}
 
 	/** Shows the finisher on the local player in third person. */
@@ -147,7 +143,6 @@ public class GoldFinisher implements ClientModInitializer {
 			DEFERRED_REMOVALS.clear();
 			CORPSES.clear();
 			FinisherCorpse.HIDDEN.clear();
-			FinisherProps.clear();
 		}
 		if (mc.level == null || mc.isPaused()) return;
 
@@ -163,7 +158,6 @@ public class GoldFinisher implements ClientModInitializer {
 			if (entity == null || elapsed < 0) { // gone, or time jumped backwards in a replay
 				it.remove();
 				DEFERRED_REMOVALS.remove(e.getKey());
-				FinisherProps.remove(mc.level, e.getKey());
 				dropCorpse(mc.level, e.getKey());
 				continue;
 			}
@@ -181,10 +175,9 @@ public class GoldFinisher implements ClientModInitializer {
 			it.remove();
 			switch (f.type()) {
 				case CHAMPIONS -> ChampionsFx.end(mc.level, entity, f, color(f, entity, 0));
-				case REAVER -> ReaverFx.end(mc.level, entity, f);
-				case AEMONDIR -> AemondirFx.end(mc.level, entity, f);
+				case REAVER -> ReaverFx.end(mc.level, f);
+				case AEMONDIR -> AemondirFx.end(mc.level, f);
 			}
-			FinisherProps.remove(mc.level, e.getKey());
 			Entity.RemovalReason reason = DEFERRED_REMOVALS.remove(e.getKey());
 			if (reason != null) mc.level.removeEntity(e.getKey(), reason);
 			dropCorpse(mc.level, e.getKey());

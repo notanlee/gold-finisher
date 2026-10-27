@@ -1,7 +1,6 @@
 package com.goldfinisher.fx;
 
 import com.goldfinisher.FinisherConfig;
-import com.goldfinisher.FinisherProps;
 import com.goldfinisher.GoldFinisher.Finisher;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -9,46 +8,27 @@ import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
-
-import java.util.List;
 
 /**
- * Champions finishers, timed from the 2022 and 2023 videos (beat sheets in docs/CUSTOMIZING.md).
- * 2023: ground glyph and a gold beam; the body hovers in it, then rises up and bursts.
- * 2022: white flash, dark dome with a lightning web, a gold weapon drops point-down into the body, shatters.
+ * Champions finishers, timed from the 2022 and 2023 videos (beat sheets in docs/CUSTOMIZING.md). Particles only.
+ * 2023: a gold glyph on the ground and a gold beam; the body hovers in it, then rises up and bursts.
+ * 2022: white flash, dark dome with a lightning web, a gold streak drives down into the body, it shatters.
  */
 public final class ChampionsFx {
-
 	private ChampionsFx() {}
 
 	private static boolean v2022() {
 		return FinisherConfig.INSTANCE.championsVersion == FinisherConfig.ChampionsVersion.V2022;
 	}
 
-	public static void start(ClientLevel level, Entity body, Finisher f) {
-		if (v2022()) {
-			FinisherProps.item(level, body.getId(), f.pos(), new ItemStack(Items.GOLDEN_SWORD), true);
-			for (int i = 0; i < 6; i++) FinisherProps.block(level, body.getId(), f.pos(), Blocks.GOLD_BLOCK.defaultBlockState(), true);
-		} else {
-			Fx.disc(level, body.getId(), f.pos(), Blocks.BLACK_CONCRETE.defaultBlockState(), false);
-			for (int i = 0; i < 2; i++) FinisherProps.block(level, body.getId(), f.pos(), Blocks.GOLD_BLOCK.defaultBlockState(), true); // glyph X
-		}
-	}
-
 	public static void tick(ClientLevel level, Entity body, Finisher f, int t, int total, int rgb) {
 		FinisherConfig cfg = FinisherConfig.INSTANCE;
 		float u = t / (float) total;
-		if (v2022()) tick2022(level, body, f, t, total, u, rgb, cfg);
+		if (v2022()) tick2022(level, body, f, t, total, u, cfg);
 		else tick2023(level, body, f, t, total, u, rgb, cfg);
 		beatbox(level, f.pos(), t, total);
 	}
@@ -59,44 +39,36 @@ public final class ChampionsFx {
 		RandomSource r = level.random;
 		Vec3 p = f.pos();
 		float h = body.getBbHeight();
-		List<Display> props = FinisherProps.of(body.getId());
-		if (props.size() < 2 + 2) return;
-
-		// ground glyph: dark disc + a gold X, appears at 0.1
-		float appear = Fx.smooth(Fx.window(u, 0.08F, 0.16F)) * (1 - Fx.window(u, 0.93F, 1F));
-		Fx.moveDisc(new Display.BlockDisplay[] { (Display.BlockDisplay) props.get(0), (Display.BlockDisplay) props.get(1) },
-				0.01F, 2.2F * appear, 0);
-		for (int i = 0; i < 2; i++) {
-			FinisherProps.move(props.get(2 + i), new Vector3f(0, 0.03F, 0),
-					new Quaternionf().rotationY((float) Math.toRadians(45 + i * 90)), new Vector3f(1.9F * appear, 0.02F, 0.16F * appear));
-		}
-
 		int n = Fx.scale(cfg);
 		DustParticleOptions dust = new DustParticleOptions(rgb, 1.3F);
-		if (u > 0.08F && u < 0.95F && t % 2 == 0) { // kept light: a few sparkles and a thin beam, not a cloud
-			for (int i = 0; i < n; i++) {
-				Fx.particle(level, dust, p.add((r.nextDouble() - 0.5) * 1.0, r.nextDouble() * h * 1.3, (r.nextDouble() - 0.5) * 1.0), 0, 0.03, 0);
-			}
-			if (cfg.beam) { // gold light beam from the glyph straight up
-				for (int i = 0; i < n; i++) {
-					Fx.particle(level, ParticleTypes.END_ROD, p.add((r.nextDouble() - 0.5) * 0.35, r.nextDouble() * (h + 3), (r.nextDouble() - 0.5) * 0.35), 0, 0.05, 0);
-				}
-			}
-		}
 		if (Fx.at(t, total, 0.08)) { // the burst of gold light when it starts
 			Fx.particle(level, ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFD86A), p.add(0, h / 2, 0), 0, 0, 0);
 			Fx.sound(level, p, SoundEvents.AMETHYST_BLOCK_CHIME, 1.5F, 0.7F);
+		}
+		if (u < 0.08F || u > 0.95F || t % 2 != 0) return; // kept light: a few particles every other tick
+		// ground glyph: a gold circle with an X through it
+		Fx.ring(level, dust, p.add(0, 0.05, 0), 1.0, 4 * n, t * 0.05);
+		for (int k = 0; k < 2; k++) {
+			double a = Math.PI / 4 + k * Math.PI / 2;
+			Vec3 d = new Vec3(Math.cos(a), 0, Math.sin(a)).scale(0.9);
+			Fx.line(level, dust, p.add(d).add(0, 0.05, 0), p.subtract(d).add(0, 0.05, 0), 3 * n);
+		}
+		for (int i = 0; i < n; i++) { // sparkles around the statue
+			Fx.particle(level, dust, p.add((r.nextDouble() - 0.5) * 1.0, r.nextDouble() * h * 1.3, (r.nextDouble() - 0.5) * 1.0), 0, 0.03, 0);
+		}
+		if (cfg.beam) { // gold light beam straight up from the glyph
+			for (int i = 0; i < n; i++) {
+				Fx.particle(level, ParticleTypes.END_ROD, p.add((r.nextDouble() - 0.5) * 0.35, r.nextDouble() * (h + 3), (r.nextDouble() - 0.5) * 0.35), 0, 0.05, 0);
+			}
 		}
 	}
 
 	// ---------------------------------------------------------------- 2022
 
-	private static void tick2022(ClientLevel level, Entity body, Finisher f, int t, int total, float u, int rgb, FinisherConfig cfg) {
+	private static void tick2022(ClientLevel level, Entity body, Finisher f, int t, int total, float u, FinisherConfig cfg) {
 		RandomSource r = level.random;
 		Vec3 p = f.pos();
 		float h = body.getBbHeight();
-		List<Display> props = FinisherProps.of(body.getId());
-		if (props.size() < 7) return;
 		int n = Fx.scale(cfg);
 
 		if (Fx.at(t, total, 0.1)) { // white star flash on the body
@@ -107,21 +79,19 @@ public final class ChampionsFx {
 		if (u > 0.15F && u < 0.85F && t % 2 == 0) { // kept sparse so the body stays readable
 			DustParticleOptions dome = new DustParticleOptions(0x3A0A12, 2.2F);
 			double radius = 2.6 * Fx.easeOut(Fx.window(u, 0.15F, 0.35F));
-			for (int i = 0; i < n * 2; i++) {
-				double a = r.nextDouble() * Math.PI * 2, b = r.nextDouble() * Math.PI / 2;
-				Fx.particle(level, dome, p.add(Math.cos(a) * Math.cos(b) * radius, 0.4 + Math.sin(b) * radius, Math.sin(a) * Math.cos(b) * radius), 0, 0, 0);
-			}
+			for (int i = 0; i < n * 2; i++) Fx.particle(level, dome, domePoint(r, p, radius), 0, 0, 0);
 			if (t % 6 == 0) { // one web strand: a chord between two points on the dome
-				Vec3 a = domePoint(r, p, radius), b = domePoint(r, p, radius);
-				Fx.line(level, ParticleTypes.ELECTRIC_SPARK, a, b, 10);
+				Fx.line(level, ParticleTypes.ELECTRIC_SPARK, domePoint(r, p, radius), domePoint(r, p, radius), 10);
 			}
 		}
 
-		// the gold weapon drops point-down from the sky into the body, then breaks into shards
-		Display sword = props.get(0);
-		float drop = Fx.easeIn(Fx.window(u, 0.42F, 0.55F));
-		float swordSize = 2.2F * (u > 0.42F && u < 0.72F ? 1 : 0);
-		FinisherProps.move(sword, new Vector3f(0, (float) Mth.lerp(drop, h + 7, h * 0.6), 0), Fx.tipDown(0), new Vector3f(swordSize, swordSize, 0.4F));
+		// a gold streak drives down from the sky into the body (where the weapon falls in the original)
+		float drop = Fx.window(u, 0.42F, 0.55F);
+		if (drop > 0 && drop < 1) {
+			Vec3 top = p.add(0, h + 8, 0), head = top.lerp(p.add(0, h * 0.6, 0), Fx.easeIn(drop));
+			Fx.line(level, ParticleTypes.END_ROD, top.lerp(head, 0.7), head, 5 * n);
+			Fx.line(level, new DustParticleOptions(0xFFC23A, 1.6F), top.lerp(head, 0.85), head, 3 * n);
+		}
 		if (Fx.at(t, total, 0.55)) { // the strike: lightning everywhere
 			Fx.sound(level, p, SoundEvents.LIGHTNING_BOLT_THUNDER, 0.6F, 1.3F);
 			Fx.sound(level, p, SoundEvents.LIGHTNING_BOLT_IMPACT, 1F, 1F);
@@ -133,18 +103,13 @@ public final class ChampionsFx {
 				Fx.line(level, ParticleTypes.ELECTRIC_SPARK, from, to, 8);
 			}
 		}
-		float shatter = Fx.window(u, 0.72F, 0.95F);
-		for (int i = 0; i < 6; i++) { // wireframe shards flying out flat
-			float a = i * Mth.TWO_PI / 6 + 0.4F;
-			float d = 0.3F + Fx.easeOut(shatter) * 2.2F;
-			float s = shatter > 0 && shatter < 1 ? 1 - shatter * 0.7F : 0;
-			FinisherProps.move(props.get(1 + i), new Vector3f(Mth.cos(a) * d, h * 0.6F + shatter * 0.4F, Mth.sin(a) * d),
-					new Quaternionf().rotationY(-a).rotateZ(shatter * 3), new Vector3f(0.7F * s, 0.1F * s, 0.1F * s));
-		}
-		if (Fx.at(t, total, 0.72)) {
-			BlockParticleOption gold = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.GOLD_BLOCK.defaultBlockState());
-			for (int i = 0; i < 30 * n; i++) {
-				Fx.particle(level, gold, p.add(0, h * 0.6, 0), (r.nextDouble() - 0.5) * 0.8, r.nextDouble() * 0.5, (r.nextDouble() - 0.5) * 0.8);
+		if (Fx.at(t, total, 0.72)) { // shatters into gold shards flying out flat
+			Vec3 c = p.add(0, h * 0.6, 0);
+			DustParticleOptions shard = new DustParticleOptions(0xFFC23A, 1.6F);
+			BlockParticleOption bits = new BlockParticleOption(ParticleTypes.BLOCK, Blocks.GOLD_BLOCK.defaultBlockState());
+			for (int i = 0; i < 25 * n; i++) {
+				double a = r.nextDouble() * Math.PI * 2, speed = 0.3 + r.nextDouble() * 0.4;
+				Fx.particle(level, i % 2 == 0 ? shard : bits, c, Math.cos(a) * speed, r.nextDouble() * 0.2, Math.sin(a) * speed);
 			}
 			Fx.sound(level, p, SoundEvents.GLASS_BREAK, 1F, 0.8F);
 		}

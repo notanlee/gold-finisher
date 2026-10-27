@@ -1,17 +1,12 @@
 package com.goldfinisher.fx;
 
 import com.goldfinisher.FinisherConfig;
-import com.goldfinisher.FinisherProps;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 /** Small helpers shared by the finisher choreographies. Times are fractions u = tick / duration. */
 final class Fx {
@@ -71,24 +66,5 @@ final class Fx {
 			double a = phase + i * Math.PI * 2 / n;
 			particle(level, o, centre.add(Math.cos(a) * radius, 0, Math.sin(a) * radius), 0, 0, 0);
 		}
-	}
-
-	/** Flat "disc": two squares rotated 45° from each other read as an octagon. */
-	static Display.BlockDisplay[] disc(ClientLevel level, int owner, Vec3 origin, BlockState state, boolean bright) {
-		return new Display.BlockDisplay[] {
-				FinisherProps.block(level, owner, origin, state, bright),
-				FinisherProps.block(level, owner, origin, state, bright) };
-	}
-
-	static void moveDisc(Display.BlockDisplay[] disc, float y, float size, float spin) {
-		for (int i = 0; i < disc.length; i++) {
-			FinisherProps.move(disc[i], new Vector3f(0, y + i * 0.002F, 0),
-					new Quaternionf().rotationY(spin + i * Mth.HALF_PI / 2), new Vector3f(size, 0.02F, size));
-		}
-	}
-
-	/** Item sprites are drawn diagonally (handle bottom-left, tip top-right): this turns the tip straight down. */
-	static Quaternionf tipDown(float yaw) {
-		return new Quaternionf().rotationY(yaw).rotateZ((float) Math.toRadians(-135));
 	}
 }
